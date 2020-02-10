@@ -13,7 +13,7 @@ const storage = new GridFsStorage({ db, client });
 const upload = multer({ storage });
 
 router.post('/profile', upload.single('file'), (req, res) => {
-	res.status(201).send('File uploaded');
+	res.status(200).json(req.file);
 });
 
 router.get('/profile/:id', (req, res) => {
