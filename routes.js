@@ -12,7 +12,18 @@ const router = express.Router();
 const storage = new GridFsStorage({ db, client });
 const upload = multer({ storage });
 
-router.post('/profile', upload.single('file'), (req, res) => {
+router.post('/profile', upload.single('file'), async (req, res) => {
+	if (req.body && req.body.oldAvatar) {
+		try {
+			const bucket = new GridFSBucket(storage.db);
+			await bucket.delete(new ObjectID(req.body.oldAvatar));
+			console.log('delete old file!!!');
+		} catch (err) {
+			// catch error case postgresql have id but in mongodb that ID is not existed
+			console.log('cannot delete old file because =>>>', err);
+		}
+
+	}
 	res.status(200).json(req.file);
 });
 
@@ -30,20 +41,20 @@ router.get('/profile/:id', (req, res) => {
 	stream.pipe(res);
 });
 
-// router.delete('/profile/:id', (req, res) => {
-// 	const bucket = new GridFSBucket(storage.db);
-// 	bucket.delete(new ObjectID(req.params.id), err => {
-// 		if (err) {
-// 			if (err.message.startsWith('FileNotFound')) {
-// 				res.status(404).send('File not found');
-// 				return;
-// 			}
+router.delete('/profile/:id', (req, res) => {
+	const bucket = new GridFSBucket(storage.db);
+	bucket.delete(new ObjectID(req.params.id), err => {
+		if (err) {
+			if (err.message.startsWith('FileNotFound')) {
+				res.status(404).send('File not found');
+				return;
+			}
 
-// 			return res.status(500).send(err);
-// 		}
+			return res.status(500).send(err);
+		}
 
-// 		res.status(204).send('File deleted');
-// 	});
-// });
+		res.status(204).send('File deleted');
+	});
+});
 
 module.exports = router;
